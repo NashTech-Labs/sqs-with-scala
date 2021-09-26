@@ -6,6 +6,7 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.sqs.SqsAsyncClient
 import software.amazon.awssdk.services.sqs.model._
 
+import java.util.UUID
 import scala.compat.java8.FutureConverters.CompletionStageOps
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
@@ -24,6 +25,9 @@ class SQSAsyncClient(queueURL : String)(implicit executionContext : ExecutionCon
         sqsAsyncClient.createQueue(createQueueRequest).toScala
     }
 
+    /*
+        queueName should be suffixed by .fifo
+     */
     def createFIFOQueue(queueName : String) : Future[CreateQueueResponse] =
     {
         val attributeMap = Map((QueueAttributeName.FIFO_QUEUE, true.toString)).asJava
@@ -45,7 +49,7 @@ class SQSAsyncClient(queueURL : String)(implicit executionContext : ExecutionCon
 
     def sendSMessagesInBatch(messages : List[String]) : Future[SendMessageBatchResponse] =
     {
-        val listSendMessageBatchRequestEntry  = messages.map(SendMessageBatchRequestEntry.builder().messageBody(_).build()).asJava
+        val listSendMessageBatchRequestEntry  = messages.map(SendMessageBatchRequestEntry.builder().messageBody(_).id(UUID.randomUUID().toString).build()).asJava
         val sendMessageBatchRequest = SendMessageBatchRequest.builder().queueUrl(queueURL).entries(listSendMessageBatchRequestEntry).build()
         sqsAsyncClient.sendMessageBatch(sendMessageBatchRequest).toScala
     }
